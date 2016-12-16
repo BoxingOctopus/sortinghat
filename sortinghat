@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+"""
+Generate random DNS hostnames.
+"""
+
+import random
+import socket
+import argparse
+import urllib2
+
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--fqdn', '-d', help='FQDN Suffix', action='store', required=True)
+parser.add_argument('--local-wordlist', '-w', help='Wordlist used to generate hostname', action='store', required=False)
+parser.add_argument('--remote-wordlist', '-r', help='URL for remote wordlist', action='store', required=False)
+
+try:
+    args = parser.parse_args()
+except argparse.ArgumentError:
+    print "One or more required arguments were not supplied."
+
+fqdn = args.fqdn
+if args.remote_wordlist is not None:
+    wordlist = args.remote_wordlist
+else:
+    wordlist = args.local_wordlist
+
+
+def main():
+    names = wordlist
+    if args.remote_wordlist is not None:
+        line = urllib2.urlopen(names).read().splitlines()
+    else:
+        line = open(names).read().splitlines()
+
+    random_name = random.choice(line)
+
+    hostname = random_name + '.' + fqdn
+
+    try:
+        socket.gethostbyname(hostname)
+    except socket.gaierror:
+        print hostname
+
+if __name__ == "__main__":
+    main()
